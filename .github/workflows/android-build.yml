@@ -12,7 +12,7 @@ contents: read
 
 jobs:
 build:
-name: Build Android APK
+name: Build FRIDAY Android APK
 runs-on: ubuntu-latest
 timeout-minutes: 45
 
@@ -27,21 +27,21 @@ steps:
       java-version: '17'
 
   - name: Setup Android SDK
-    uses: android-actions/setup-android@v3
-    with:
-      packages: platform-tools
-
-  - name: Install Android SDK Components
     run: |
-      sdkmanager --install "platforms;android-35" "build-tools;35.0.0"
-      yes | sdkmanager --licenses
-
-  - name: Verify Android SDK
-    run: |
-      sdkmanager --list_installed
       echo "ANDROID_HOME=$ANDROID_HOME"
+      echo "ANDROID_SDK_ROOT=$ANDROID_HOME"
+      sdkmanager --version
+
+  - name: Install Android SDK Packages
+    run: |
+      yes | sdkmanager --licenses || true
+      sdkmanager --install "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+
+  - name: Verify SDK
+    run: |
       test -d "$ANDROID_HOME/platforms/android-35"
       test -d "$ANDROID_HOME/build-tools/35.0.0"
+      echo "Android SDK ready"
 
   - name: Setup Gradle
     uses: gradle/actions/setup-gradle@v4
@@ -60,10 +60,7 @@ steps:
     working-directory: android
     run: |
       APK="app/build/outputs/apk/debug/app-debug.apk"
-      if [ ! -f "$APK" ]; then
-        echo "APK was not generated!"
-        exit 1
-      fi
+      test -f "$APK"
       ls -lh "$APK"
       "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$APK" | head -n 5
 
